@@ -88,6 +88,31 @@ export default function Calendar() {
     return () => clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input or textarea
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return
+      }
+
+      const key = e.key.toLowerCase()
+      if (key === "m") {
+        setViewType("Month")
+      } else if (key === "w") {
+        setViewType("Week")
+      } else if (key === "d") {
+        setViewType("Day")
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
+
   const goToPrevious = () => {
     if (viewType === "Month") {
       setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))
@@ -405,8 +430,8 @@ export default function Calendar() {
       {viewType === "Week" && (
         <div className="w-full overflow-x-auto">
           {/* Week Header */}
-          <div className="grid grid-cols-8 border-b border-gray-200 min-w-[600px]">
-            <div className="px-2 py-3 text-center text-xs font-medium text-gray-400">
+          <div className="grid grid-cols-8 border-b border-gray-200 min-w-0">
+            <div className="px-1 sm:px-2 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium text-gray-400">
               GMT{new Date().getTimezoneOffset() <= 0 ? "+" : "-"}
               {Math.abs(new Date().getTimezoneOffset() / 60)}
             </div>
@@ -417,20 +442,22 @@ export default function Calendar() {
               return (
                 <div
                   key={index}
-                  className={`px-2 py-3 text-center text-sm ${isTodayDay ? "font-bold text-gray-900" : "font-medium text-gray-500"}`}
+                  className={`px-0.5 sm:px-2 py-2 sm:py-3 text-center text-[10px] sm:text-sm ${isTodayDay ? "font-bold text-gray-900" : "font-medium text-gray-500"}`}
                 >
-                  {dayName} {dayNum}
+                  <span className="hidden sm:inline">{dayName}</span>
+                  <span className="sm:hidden">{dayName.charAt(0)}</span> {dayNum}
                 </div>
               )
             })}
           </div>
 
           {/* Week Grid with Hours */}
-          <div className="relative min-w-[600px]">
+          <div className="relative min-w-0">
             {hours.map((hour, hourIndex) => (
               <div key={hour} className="grid grid-cols-8 border-b border-gray-100">
-                <div className="px-2 py-3 text-xs text-gray-400 text-right pr-4 h-12 flex items-start justify-end">
-                  {hour}
+                <div className="px-0.5 sm:px-2 py-2 sm:py-3 text-[8px] sm:text-xs text-gray-400 text-right pr-1 sm:pr-4 h-8 sm:h-12 flex items-start justify-end">
+                  <span className="hidden sm:inline">{hour}</span>
+                  <span className="sm:hidden">{hour.replace(" ", "")}</span>
                 </div>
                 {weekDays.map((day, dayIndex) => {
                   const isTodayDay = isToday(day)
@@ -440,19 +467,19 @@ export default function Calendar() {
                   return (
                     <div
                       key={dayIndex}
-                      className={`border-l border-gray-100 h-12 relative ${isTodayDay ? "bg-gray-50/50" : ""}`}
+                      className={`border-l border-gray-100 h-8 sm:h-12 relative ${isTodayDay ? "bg-gray-50/50" : ""}`}
                     >
                       {hourEvents.map((event) => (
                         <div
                           key={event.id}
-                          className={`absolute inset-x-0 mx-1 ${event.color} rounded px-2 py-1 text-xs text-gray-800`}
+                          className={`absolute inset-x-0 mx-0.5 sm:mx-1 ${event.color} rounded px-0.5 sm:px-2 py-0.5 sm:py-1 text-[8px] sm:text-xs text-gray-800`}
                           style={{
-                            height: `${(event.endHour - event.startHour) * 48}px`,
+                            height: `${(event.endHour - event.startHour) * 32}px`,
                             zIndex: 10,
                           }}
                         >
-                          <div className="font-medium">{event.title}</div>
-                          <div className="text-gray-500 text-[10px]">
+                          <div className="font-medium truncate">{event.title}</div>
+                          <div className="text-gray-500 text-[6px] sm:text-[10px] hidden sm:block">
                             {event.startHour}am - {event.endHour}am
                           </div>
                         </div>
@@ -467,12 +494,12 @@ export default function Calendar() {
             {weekDays.some((day) => isToday(day)) && (
               <div
                 className="absolute left-0 right-0 flex items-center z-20 pointer-events-none"
-                style={{ top: `${getCurrentTimePosition()}px` }}
+                style={{ top: `${getCurrentTimePosition() * (32 / 48)}px` }}
               >
                 <div className="w-[12.5%]" />
                 <div className="flex items-center flex-1">
-                  <div className="w-2 h-2 bg-red-500 rounded-full -ml-1" />
-                  <div className="flex-1 h-[2px] bg-red-500" />
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-red-500 rounded-full -ml-1" />
+                  <div className="flex-1 h-[1px] sm:h-[2px] bg-red-500" />
                 </div>
               </div>
             )}
