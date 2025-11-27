@@ -4,21 +4,49 @@ import { useState, useMemo, useEffect } from "react"
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 
-interface CalendarEvent {
-  id: number
+export interface CalendarEvent {
+  id: string
   title: string
-  date: string
-  color: string
+  description?: string
+  start: Date
+  end: Date
+  allDay?: boolean
+  color?: "sky" | "amber" | "violet" | "rose" | "emerald" | "orange" | "teal" | "cyan" | "purple" | "green"
+  location?: string
 }
 
-interface TimedEvent {
-  id: number
-  title: string
-  date: string
-  startHour: number
-  endHour: number
-  color: string
+interface CalendarProps {
+  events?: CalendarEvent[]
+  className?: string
+  initialView?: "month" | "week" | "day"
+}
+
+const colorMap: Record<NonNullable<CalendarEvent["color"]>, string> = {
+  sky: "bg-sky-500",
+  amber: "bg-amber-500",
+  violet: "bg-violet-500",
+  rose: "bg-rose-500",
+  emerald: "bg-emerald-500",
+  orange: "bg-orange-500",
+  teal: "bg-teal-500",
+  cyan: "bg-cyan-500",
+  purple: "bg-purple-500",
+  green: "bg-green-500",
+}
+
+const colorMapLight: Record<NonNullable<CalendarEvent["color"]>, string> = {
+  sky: "bg-sky-100 border-l-4 border-sky-400",
+  amber: "bg-amber-100 border-l-4 border-amber-400",
+  violet: "bg-violet-100 border-l-4 border-violet-400",
+  rose: "bg-rose-100 border-l-4 border-rose-400",
+  emerald: "bg-emerald-100 border-l-4 border-emerald-400",
+  orange: "bg-orange-100 border-l-4 border-orange-400",
+  teal: "bg-teal-100 border-l-4 border-teal-400",
+  cyan: "bg-cyan-100 border-l-4 border-cyan-400",
+  purple: "bg-purple-100 border-l-4 border-purple-400",
+  green: "bg-green-100 border-l-4 border-green-400",
 }
 
 const eventColors = [
@@ -65,17 +93,24 @@ const hours = [
   "12 AM",
 ]
 
-export default function Calendar() {
+export default function Calendar({ events = [], className, initialView = "month" }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
   })
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const [viewType, setViewType] = useState<"Month" | "Week" | "Day">("Month")
+  const [viewType, setViewType] = useState<"Month" | "Week" | "Day">(() => {
+    const viewMap: Record<string, "Month" | "Week" | "Day"> = {
+      month: "Month",
+      week: "Week",
+      day: "Day",
+    }
+    return viewMap[initialView] || "Month"
+  })
   const [weekStart, setWeekStart] = useState(() => {
     const now = new Date()
     const day = now.getDay()
-    const diff = day === 0 ? -6 : 1 - day // Adjust to start week on Monday
+    const diff = day === 0 ? -6 : 1 - day
     return new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff)
   })
   const [dayViewDate, setDayViewDate] = useState(new Date())
@@ -148,61 +183,91 @@ export default function Calendar() {
     const month = currentDate.getMonth()
     return [
       {
-        id: 1,
+        id: "1",
         title: "Design review",
-        date: `${year}-${String(month + 1).padStart(2, "0")}-03`,
-        color: getRandomColor(1),
+        description: "Discuss the latest design changes",
+        start: new Date(year, month, 3, 10, 0),
+        end: new Date(year, month, 3, 11, 0),
+        allDay: false,
+        color: "sky",
+        location: "Conference Room A",
       },
       {
-        id: 2,
+        id: "2",
         title: "Sales meeting",
-        date: `${year}-${String(month + 1).padStart(2, "0")}-03`,
-        color: getRandomColor(2),
+        description: "Review sales targets for Q4",
+        start: new Date(year, month, 3, 14, 0),
+        end: new Date(year, month, 3, 15, 0),
+        allDay: false,
+        color: "amber",
+        location: "Meeting Room B",
       },
       {
-        id: 3,
+        id: "3",
         title: "Date night",
-        date: `${year}-${String(month + 1).padStart(2, "0")}-07`,
-        color: getRandomColor(3),
+        description: "Dinner at the new restaurant",
+        start: new Date(year, month, 7, 18, 0),
+        end: new Date(year, month, 7, 21, 0),
+        allDay: false,
+        color: "violet",
+        location: "Restaurant C",
       },
       {
-        id: 4,
+        id: "4",
         title: "Sam's birthday party",
-        date: `${year}-${String(month + 1).padStart(2, "0")}-12`,
-        color: getRandomColor(4),
+        description: "Celebrating Sam's birthday",
+        start: new Date(year, month, 12, 0, 0),
+        end: new Date(year, month, 12, 23, 59),
+        allDay: true,
+        color: "rose",
+        location: "Sam's House",
       },
       {
-        id: 5,
+        id: "5",
         title: "Maple syrup museum",
-        date: `${year}-${String(month + 1).padStart(2, "0")}-22`,
-        color: getRandomColor(5),
+        description: "Visit the museum about maple syrup",
+        start: new Date(year, month, 22, 9, 0),
+        end: new Date(year, month, 22, 17, 0),
+        allDay: false,
+        color: "emerald",
+        location: "Museum D",
       },
       {
-        id: 6,
+        id: "6",
         title: "Hockey game",
-        date: `${year}-${String(month + 1).padStart(2, "0")}-22`,
-        color: getRandomColor(6),
+        description: "Watch the hockey game",
+        start: new Date(year, month, 22, 19, 0),
+        end: new Date(year, month, 22, 21, 0),
+        allDay: false,
+        color: "orange",
+        location: "Stadium E",
       },
       {
-        id: 7,
+        id: "7",
         title: "Cinema with friends",
-        date: `${year}-${String(month + 2).padStart(2, "0")}-04`,
-        color: getRandomColor(7),
+        description: "Movie night with friends",
+        start: new Date(year, month + 1, 4, 20, 0),
+        end: new Date(year, month + 1, 4, 22, 0),
+        allDay: false,
+        color: "teal",
+        location: "Cinema F",
       },
     ]
   }, [currentDate])
 
-  const timedEvents: TimedEvent[] = useMemo(() => {
+  const timedEvents: CalendarEvent[] = useMemo(() => {
     const today = new Date()
     const dateStr = today.toISOString().split("T")[0]
     return [
       {
-        id: 1,
+        id: "default-1",
         title: "Team Meeting",
-        date: dateStr,
-        startHour: 10,
-        endHour: 11,
-        color: "bg-blue-100 border-l-4 border-blue-400",
+        description: "Weekly team meeting",
+        start: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 0),
+        end: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11, 0),
+        allDay: false,
+        color: "sky",
+        location: "Conference Room A",
       },
     ]
   }, [])
@@ -248,12 +313,53 @@ export default function Calendar() {
 
   const getEventsForDate = (date: Date) => {
     const dateStr = date.toISOString().split("T")[0]
-    return dynamicEvents.filter((event) => event.date === dateStr)
+    const defaultEvents = dynamicEvents.filter((event) => event.start.toISOString().split("T")[0] === dateStr)
+
+    // Filter prop events for this date (all-day or matching date)
+    const propEventsForDate = events.filter((event) => {
+      const eventDateStr = event.start.toISOString().split("T")[0]
+      return eventDateStr === dateStr && (event.allDay === true || event.allDay === undefined)
+    })
+
+    return { defaultEvents, propEventsForDate }
   }
 
   const getTimedEventsForDate = (date: Date) => {
     const dateStr = date.toISOString().split("T")[0]
-    return timedEvents.filter((event) => event.date === dateStr)
+
+    // Get prop events that are not all-day
+    const propTimedEvents = events
+      .filter((event) => {
+        const eventDateStr = event.start.toISOString().split("T")[0]
+        return eventDateStr === dateStr && event.allDay === false
+      })
+      .map((event) => ({
+        id: event.id,
+        title: event.title,
+        date: dateStr,
+        startHour: event.start.getHours(),
+        endHour: event.end.getHours(),
+        color: event.color ? colorMapLight[event.color] : "bg-blue-100 border-l-4 border-blue-400",
+      }))
+
+    // Default timed event
+    const today = new Date()
+    const todayStr = today.toISOString().split("T")[0]
+    const defaultTimedEvents =
+      dateStr === todayStr
+        ? [
+            {
+              id: "default-1",
+              title: "Team Meeting",
+              date: dateStr,
+              startHour: 10,
+              endHour: 11,
+              color: "bg-blue-100 border-l-4 border-blue-400",
+            },
+          ]
+        : []
+
+    return [...defaultTimedEvents, ...propTimedEvents]
   }
 
   const isToday = (date: Date) => {
@@ -308,12 +414,8 @@ export default function Calendar() {
     return position
   }
 
-  const shouldShowTimeIndicator = (date: Date) => {
-    return isToday(date)
-  }
-
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden w-full">
+    <div className={cn("bg-white rounded-xl shadow-lg overflow-hidden w-full", className)}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 md:p-6 border-b border-gray-200 gap-4">
         <h1 className="text-xl md:text-2xl font-semibold text-gray-900">{getHeaderTitle()}</h1>
@@ -376,7 +478,7 @@ export default function Calendar() {
             {/* Calendar Days */}
             <div className="grid grid-cols-7">
               {calendarDays.map((day, index) => {
-                const dayEvents = getEventsForDate(day.date)
+                const { defaultEvents, propEventsForDate } = getEventsForDate(day.date)
                 const isCurrentDay = isToday(day.date)
                 const isSelectedDay = isSelected(day.date)
                 const isSat = isSaturday(day.date)
@@ -405,11 +507,25 @@ export default function Calendar() {
                       </span>
                     </div>
                     <div className="space-y-0.5 sm:space-y-1 overflow-hidden">
-                      {dayEvents.map((event) => (
+                      {/* Default events */}
+                      {defaultEvents.map((event) => (
                         <div
                           key={event.id}
                           className={`
                             ${event.color} text-white text-[8px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 md:px-2 py-0.5 md:py-1 
+                            rounded truncate cursor-pointer hover:opacity-90 transition-opacity
+                            max-w-full overflow-hidden text-ellipsis whitespace-nowrap
+                          `}
+                          title={event.title}
+                        >
+                          {event.title}
+                        </div>
+                      ))}
+                      {propEventsForDate.map((event) => (
+                        <div
+                          key={event.id}
+                          className={`
+                            ${event.color ? colorMap[event.color] : "bg-blue-500"} text-white text-[8px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 md:px-2 py-0.5 md:py-1 
                             rounded truncate cursor-pointer hover:opacity-90 transition-opacity
                             max-w-full overflow-hidden text-ellipsis whitespace-nowrap
                           `}
@@ -431,7 +547,7 @@ export default function Calendar() {
         <div className="w-full overflow-x-auto">
           {/* Week Header */}
           <div className="grid grid-cols-8 border-b border-gray-200 min-w-0">
-            <div className="px-1 sm:px-2 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium text-gray-400">
+            <div className="px-0.5 sm:px-2 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium text-gray-400">
               GMT{new Date().getTimezoneOffset() <= 0 ? "+" : "-"}
               {Math.abs(new Date().getTimezoneOffset() / 60)}
             </div>
@@ -461,8 +577,8 @@ export default function Calendar() {
                 </div>
                 {weekDays.map((day, dayIndex) => {
                   const isTodayDay = isToday(day)
-                  const events = getTimedEventsForDate(day)
-                  const hourEvents = events.filter((e) => e.startHour === hourIndex + 1)
+                  const timedEvents = getTimedEventsForDate(day)
+                  const hourEvents = timedEvents.filter((e) => e.startHour === hourIndex + 1)
 
                   return (
                     <div
@@ -512,8 +628,8 @@ export default function Calendar() {
           {/* Day Grid with Hours */}
           <div className="relative">
             {hours.map((hour, hourIndex) => {
-              const events = getTimedEventsForDate(dayViewDate)
-              const hourEvents = events.filter((e) => e.startHour === hourIndex + 1)
+              const timedEvents = getTimedEventsForDate(dayViewDate)
+              const hourEvents = timedEvents.filter((e) => e.startHour === hourIndex + 1)
 
               return (
                 <div key={hour} className="flex border-b border-gray-100">
